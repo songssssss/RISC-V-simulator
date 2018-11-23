@@ -122,13 +122,13 @@ public class IsaSim {
 					}
 					break;
 				case 0b110: // BLTU
-					if (getUnsignedint(reg[rs1]) < getUnsignedint(reg[rs2])) {
+					if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
 						reg[1] = pc + 4;
 						pc = B_imm;
 					}
 					break;
 				case 0b111:// BGEU
-					if (getUnsignedint(reg[rs1]) < getUnsignedint(reg[rs2])) {
+					if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
 						reg[1] = pc + 4;
 						pc = B_imm;
 					}
