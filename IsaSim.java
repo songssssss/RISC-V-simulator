@@ -12,6 +12,58 @@ public class IsaSim {
 	// memory?
 	// static int mem[]
 
+	private static final String INPUT_FILE_NAME = "C:\\TEMP\\cottage.jpg";
+  	private static final String OUTPUT_FILE_NAME = "C:\\TEMP\\cottage_copy.jpg";
+ 	
+	byte[] readAlternateImpl(String inputFileName){
+   	log("Reading in binary file named : " + inputFileName);
+    	File file = new File(inputFileName);
+    	log("File size: " + file.length());
+    	byte[] result = null;
+    	try {
+      	InputStream input =  new BufferedInputStream(new FileInputStream(file));
+      	result = readAndClose(input);
+   	 }
+    	catch (FileNotFoundException ex){
+      	log(ex);
+    	}
+    	return result;
+  	}
+	
+	
+  	
+	
+        void write(byte[] input, String outputFileName){
+   	log("Writing binary file...");
+    	try {
+      	OutputStream output = null;
+      	try {
+        output = new BufferedOutputStream(new FileOutputStream(outputFileName));
+        output.write(input);
+      	}
+      	finally {
+        output.close();
+      	}
+    	}
+    	catch(FileNotFoundException ex){
+      	log("File not found.");
+    	}
+    	catch(IOException ex){
+      	log(ex);
+   	 }
+  	}
+	
+	/** Run the example. */
+  	void readprogr (String[] args) {
+    	//BytesStreamsAndFiles test = new BytesStreamsAndFiles();
+    	//byte[] readAlternateImpl = test.read(INPUT_FILE_NAME);
+    	//read in the bytes
+    	byte[] fileContents = byte[] readAlternateImpl(INPUT_FILE_NAME);
+    	write(fileContents, OUTPUT_FILE_NAME);
+	}//test.readAlternateImpl(INPUT_FILE_NAME);
+    	
+	
+	
 	// The final simulator has to read a binary file containing RISC-V instructions.
 	// What is the file type for the instruction?
 	// Do I need to run file when running?
