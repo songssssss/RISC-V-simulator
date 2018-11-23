@@ -54,7 +54,8 @@ public class IsaSim {
 			int I_imm = rs2 + (imm << 5); // for I-type
 			int U_imm = funct3 + (rs1 << 5) + (rs2 << 8) + (imm << 13);
 			int S_imm = rd + (imm << 5);
-			int B_imm = (rd >> 1) + (imm < 4); // not sure about B-type
+			int B_imm = rd + (imm << 5);
+			// (rd >> 1)&0xf + (imm < 4)&0x3f; // not sure about B-type
 			// int J_imm = ;
 
 			System.out.println("instr: 0x" + decToHex(instr) + " ");
@@ -73,11 +74,14 @@ public class IsaSim {
 				}
 				break;
 
-			case 0x037: // LUI
-
+			case 0x037: // LUI load upper immediate
+				reg[rd] = U_imm & 0xfffff000;
 				break;
 
-			case 0x027: // AUIPC
+			case 0x027: // AUIPC Add Upper Imm to PC
+				reg[1] = pc; // do i need this?
+				pc = U_imm & 0xfffff000;
+				reg[rd] = pc;
 
 				break;
 
@@ -87,39 +91,46 @@ public class IsaSim {
 				break;
 
 			case 0x067: // JALR:
-
+				reg[rd] = pc + 4;
+				pc = reg[rs1] + B_imm;
 				break;
 
 			case 0x063: // type: bench
 				switch (funct3) {
 				case 0b000:// BEQ
 					if (reg[rs1] == reg[rs2]) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				case 0b001:// BNE
 					if (reg[rs1] != reg[rs2]) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				case 0b100: // BLT
 					if (reg[rs1] < reg[rs2]) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				case 0b101: // BGE
 					if (reg[rs1] >= reg[rs2]) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				case 0b110: // BLTU
 					if (getUnsignedint(reg[rs1]) < getUnsignedint(reg[rs2])) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				case 0b111:// BGEU
 					if (getUnsignedint(reg[rs1]) < getUnsignedint(reg[rs2])) {
-
+						reg[1] = pc + 4;
+						pc = B_imm;
 					}
 					break;
 				}
