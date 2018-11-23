@@ -26,13 +26,14 @@ public class IsaSim {
 	};
 
 	public static String decToHex(int dec) {
-		return Integer.toHexString(dec);
+		return Integer.toHexString(dec); // this turn decimal to hex, only 
+		//used in default case
 	}
 
 	public static int getUnsignedInt(int x) {
 		System.out.println("int: " + x);
-		System.out.println("unsigned int: " + (x & 0x00000000ffffffffL));
-		return x & 0x00000000ffffffffL;
+		System.out.println("unsigned int: " + (x & 0xffffffff));
+		return (x & 0xffffffff);
 	}
 
 	public static void main(String[] args) {
@@ -67,22 +68,22 @@ public class IsaSim {
 			System.out.println("imm: " + imm + " ");
 
 			switch (opcode) {
-			// fence, fence.i, ebreak, csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci can be
-			// ignored
-			case 0x0: // type:
+			// fence, fence.i, ebreak, csrrw, csrrs, csrrc, csrrwi, 
+			//csrrsi, csrrci can be ignored
+					
+			case 0x0: // template
 				switch (funct3) {
 				}
 				break;
 
-			case 0x037: // LUI load upper immediate
+			case 0x037: // LUI load upper immediate (20bits)
 				reg[rd] = U_imm & 0xfffff000;
 				break;
 
-			case 0x027: // AUIPC Add Upper Imm to PC
+			case 0x027: // AUIPC Add Upper Imm (20bits) to PC
 				reg[1] = pc; // do i need this?
 				pc = U_imm & 0xfffff000;
 				reg[rd] = pc;
-
 				break;
 
 			case 0x06f: // JAL
@@ -90,7 +91,7 @@ public class IsaSim {
 				pc = B_imm - 4;
 				break;
 
-			case 0x067: // JALR:
+			case 0x067: // JALR
 				reg[rd] = pc + 4;
 				pc = reg[rs1] + B_imm;
 				break;
@@ -159,8 +160,18 @@ public class IsaSim {
 					reg[rd] = reg[rs1] + I_imm;
 					break;
 				case 0b010: // SLTI (set < immediate)
+					if (reg[rs1] < I_imm) {
+						reg[rd] = 1;
+					} else {
+						reg[rd] = 0;
+					}
 					break;
-				case 0b011: // SLTIU (set < set < imm unsigned)
+				case 0b011: // SLTIU (set < imm unsigned)
+					if (getUnsignedInt(reg[rs1]) < getUnsignedInt(I_imm)) {
+						reg[rd] = 1;
+					} else {
+						reg[rd] = 0;
+					}
 					break;
 				case 0b100: // XORI
 					reg[rd] = reg[rs1] ^ I_imm;
@@ -174,8 +185,16 @@ public class IsaSim {
 				case 0b001: // SLLI
 					reg[rd] = reg[rs1] << I_imm;
 					break;
-				case 0b101: // SRLI & SRAI //not sure about the difference, so only implement SRLI
-					reg[rd] = reg[rs1] >> I_imm;
+				case 0b101: // SRLI & SRAI 
+					if (imm != 0) { // SRL
+						reg[rd] = reg[rs1] >> I_imm;
+					} else { // SRA
+						// as far as I know, 
+						//shifting in java keep the sign, 
+						//need checking
+						reg[rd] = reg[rs1] >> I_imm;
+						reg[rd] = (reg[rd] & 0xffffffff);
+					}
 					break;
 				}
 				break;
@@ -188,14 +207,33 @@ public class IsaSim {
 				case 0b001: // SLL
 					reg[rd] = reg[rs1] << reg[rs2];
 					break;
-				case 0b010: // SLT (set<) not sure how to implement
+				case 0b010: // SLT (set<)
+					if (reg[rs1] < reg[rs2]) {
+						reg[rd] = 1;
+					} else {
+						reg[rd] = 0;
+					}
+					break;
 				case 0b011: // SLTU (set< unsign)
+					if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
+						reg[rd] = 1;
+					} else {
+						reg[rd] = 0;
+					}
+					break;
 				case 0b100: // XOR
 					reg[rd] = reg[rs1] ^ reg[rs2];
 					break;
-				case 0b101: // SRL & SRA Don't know the difference between shift right and arithmetic shift
-							// right, so I implemnted the SRL only
-					reg[rd] = reg[rs1] >> reg[rs2];
+				case 0b101: // SRL & SRA 
+					if (imm != 0) { // SRL
+						reg[rd] = reg[rs1] >> reg[rs2];
+					} else { // SRA
+						// as far as I know, 
+						// shifting in java keep the sign,
+						// need checking
+						reg[rd] = reg[rs1] >> reg[rs2];
+						reg[rd] = (reg[rd] & 0xffffffff);
+					}
 					break;
 				case 0b110: // OR
 					reg[rd] = reg[rs1] | reg[rs2];
@@ -209,9 +247,8 @@ public class IsaSim {
 
 			case 0x073: // ecall
 				pc = progr.length;
-				// when I try ecall in https://www.kvakil.me/venus/, it outputs "Invalid ecall
-				// 0".
-				// Should I do the same?
+				// When the program ends with ecall you write another binary file containing the
+				// content of your registers (the .res file).
 				break;
 
 			default:
