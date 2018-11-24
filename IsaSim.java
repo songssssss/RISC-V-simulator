@@ -21,7 +21,7 @@ public class IsaSim {
 	static int pc;
 	static int reg[] = new int[32];
 	// memory = data[] + prog[]
-	static int data[] = new int[64];
+	static byte data[] = new byte[1000];
 
 
 	// The final simulator has to read a binary file containing RISC-V instructions.
