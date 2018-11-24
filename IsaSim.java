@@ -120,6 +120,17 @@ public class IsaSim {
 		System.out.println("unsigned int: " + (x & 0xffffffff));
 		return (x & 0xffffffff);
 	}
+	
+	public static byte[] toBytes(int i) {
+        byte[] result = new byte[4];
+
+        result[0] = (byte) (i >> 24);
+        result[1] = (byte) (i >> 16);
+        result[2] = (byte) (i >> 8);
+        result[3] = (byte) (i /* >> 0 */);
+
+        return result;
+   	}
 
 	public static void main(String[] args) {
 
@@ -231,18 +242,26 @@ public class IsaSim {
 				// LHU
 				break;
 
-			case 0x023: // type: store           
-                		switch (funct3) {
-                		case 0b000: // SB
-                		data[rs1 + S_imm/4] = data[rs1 + S_imm/4]& 0xffffff00 + reg[rs2] & 0xff;
-                		break;
-                		case 0b001: // SH
-                		data[rs1 + S_imm/4] = data[rs1 + S_imm/4]&0xffff0000 + reg[rs2] & 0xffff;
-                		break;
-                		case 0b010: // SW
-                		data[rs1 + S_imm/4] = reg[rs2];
-                		}
-                		break;
+			case 0x023: // type: store
+				byte[] temp = new byte[4];
+				switch (funct3) {
+				case 0b000: // SB
+				    temp = toBytes(reg[rs2]);
+				    data[rs1 + S_imm] = temp[3];
+				    break;
+				case 0b001: // SH
+				    temp = toBytes(reg[rs2]);
+				    data[rs1 + S_imm] = temp[2];
+				    data[rs1 + S_imm + 1] = temp[3];
+				    break;
+				case 0b010: // SW
+				    temp = toBytes(reg[rs2]);
+				    data[rs1 + S_imm] = temp[0];
+				    data[rs1 + S_imm + 1] = temp[1];
+				    data[rs1 + S_imm + 2] = temp[2];
+				    data[rs1 + S_imm + 3] = temp[3];
+				}
+				break;
 
 
 			case 0x013: // type: immediate
