@@ -20,9 +20,22 @@ public class IsaSim {
 
 	static int pc;
 	static int reg[] = new int[32];
+	// memory = data[] + prog[]
+	static int data[] = new int[64];
 
-	// memory?
-	// static int mem[]
+
+	// The final simulator has to read a binary file containing RISC-V instructions.
+	// What is the file type for the instruction?
+	// Do I need to run file when running?
+
+	// Here the first program hard coded as an array
+	static int instructions[] = {
+			// As minimal RISC-V assembler example
+			0x00200093, // addi x1 x0 2
+			0x00300113, // addi x2 x0 3
+			0x002081b3, // add x3 x1 x2
+			0x40208233, // sub x4 x1 x2
+	};
 
 	private static final String INPUT_FILE_NAME = "C:\\TEMP\\cottage.jpg";
     private static final String OUTPUT_FILE_NAME = "C:\\TEMP\\cottage_copy.jpg";
@@ -95,19 +108,7 @@ public class IsaSim {
     }// test.readAlternateImpl(INPUT_FILE_NAME);
     	
 	
-	
-	// The final simulator has to read a binary file containing RISC-V instructions.
-	// What is the file type for the instruction?
-	// Do I need to run file when running?
 
-	// Here the first program hard coded as an array
-	static int progr[] = {
-			// As minimal RISC-V assembler example
-			0x00200093, // addi x1 x0 2
-			0x00300113, // addi x2 x0 3
-			0x002081b3, // add x3 x1 x2
-			0x40208233, // sub x4 x1 x2
-	};
 
 	public static String decToHex(int dec) {
 		return Integer.toHexString(dec); // this turn decimal to hex, only 
@@ -129,7 +130,7 @@ public class IsaSim {
 
 		for (;;) {
 
-			int instr = progr[pc];
+			int instr = instructions[pc];
 			int opcode = instr & 0x7f;
 			int rd = (instr >> 7) & 0x01f;
 			int funct3 = (instr >> 12) & 0x7;
@@ -230,12 +231,19 @@ public class IsaSim {
 				// LHU
 				break;
 
-			case 0x023: // type: store
-				// SB
-				// SH
-				// SW
+			case 0x023: // type: store           
+                		switch (funct3) {
+                		case 0b000: // SB
+                		data[rs1 + S_imm/4] = data[rs1 + S_imm/4]& 0xffffff00 + reg[rs2] & 0xff;
+                		break;
+                		case 0b001: // SH
+                		data[rs1 + S_imm/4] = data[rs1 + S_imm/4]&0xffff0000 + reg[rs2] & 0xffff;
+                		break;
+                		case 0b010: // SW
+                		data[rs1 + S_imm/4] = reg[rs2];
+                		}
+                		break;
 
-				break;
 
 			case 0x013: // type: immediate
 
@@ -330,7 +338,7 @@ public class IsaSim {
 				break;
 
 			case 0x073: // ecall
-				pc = progr.length;
+				pc = instructions.length;
 				// When the program ends with ecall you write another binary file containing the
 				// content of your registers (the .res file).
 				break;
@@ -346,7 +354,7 @@ public class IsaSim {
 				System.out.print(reg[i] + " ");
 			}
 			System.out.println();
-			if (pc >= progr.length) {
+			if (pc >= instructions.length) {
 				break;
 			}
 		}
