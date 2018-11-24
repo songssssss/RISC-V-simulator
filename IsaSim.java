@@ -4,6 +4,18 @@
  * @author Lau Kai Sing (laut9810@gmail.com)
  * 
  */
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class IsaSim {
 
 	static int pc;
@@ -13,54 +25,74 @@ public class IsaSim {
 	// static int mem[]
 
 	private static final String INPUT_FILE_NAME = "C:\\TEMP\\cottage.jpg";
-  	private static final String OUTPUT_FILE_NAME = "C:\\TEMP\\cottage_copy.jpg";
- 	
-	byte[] readAlternateImpl(String inputFileName){
-   	log("Reading in binary file named : " + inputFileName);
-    	File file = new File(inputFileName);
-    	log("File size: " + file.length());
-    	byte[] result = null;
-    	try {
-      	InputStream input =  new BufferedInputStream(new FileInputStream(file));
-      	result = readAndClose(input);
-   	 }
-    	catch (FileNotFoundException ex){
-      	log(ex);
-    	}
-    	return result;
-  	}
-	
-	
-  	
-	
-        void write(byte[] input, String outputFileName){
-   	log("Writing binary file...");
-    	try {
-      	OutputStream output = null;
-      	try {
-        output = new BufferedOutputStream(new FileOutputStream(outputFileName));
-        output.write(input);
-      	}
-      	finally {
-        output.close();
-      	}
-    	}
-    	catch(FileNotFoundException ex){
-      	log("File not found.");
-    	}
-    	catch(IOException ex){
-      	log(ex);
-   	 }
-  	}
-	
-	/** Run the example. */
-  	void readprogr (String[] args) {
-    	//BytesStreamsAndFiles test = new BytesStreamsAndFiles();
-    	//byte[] readAlternateImpl = test.read(INPUT_FILE_NAME);
-    	//read in the bytes
-    	byte[] fileContents = byte[] readAlternateImpl(INPUT_FILE_NAME);
-    	write(fileContents, OUTPUT_FILE_NAME);
-	}//test.readAlternateImpl(INPUT_FILE_NAME);
+    private static final String OUTPUT_FILE_NAME = "C:\\TEMP\\cottage_copy.jpg";
+
+    public byte[] readAlternateImpl(String inputFileName) {
+        System.out.println("Reading in binary file named : " + inputFileName);
+        File file = new File(inputFileName);
+        System.out.println("File size: " + file.length());
+        byte[] result = null;
+        try {
+            InputStream input = new BufferedInputStream(new FileInputStream(file));
+            result = readAndClose(input);
+        } catch (FileNotFoundException ex) {
+            System.out.println(ex);
+        }
+        return result;
+    }
+
+    public void write(byte[] input, String outputFileName) {
+        System.out.println("Writing binary file...");
+        try {
+            OutputStream output = null;
+            try {
+                output = new BufferedOutputStream(new FileOutputStream(outputFileName));
+                output.write(input);
+            } finally {
+                output.close();
+            }
+        } catch (FileNotFoundException ex) {
+            System.out.println("File not found.");
+        } catch (IOException ex) {
+            System.out.println(ex);
+        }
+    }
+
+    byte[] readAndClose(InputStream input) {
+        // carries the data from input to output :
+        byte[] bucket = new byte[32 * 1024];
+        ByteArrayOutputStream result = null;
+        try {
+            try {
+                // Use buffering? No. Buffering avoids costly access to disk or network;
+                // buffering to an in-memory stream makes no sense.
+                result = new ByteArrayOutputStream(bucket.length);
+                int bytesRead = 0;
+                while (bytesRead != -1) {
+                    // aInput.read() returns -1, 0, or more :
+                    bytesRead = input.read(bucket);
+                    if (bytesRead > 0) {
+                        result.write(bucket, 0, bytesRead);
+                    }
+                }
+            } finally {
+                input.close();
+                // result.close(); this is a no-operation for ByteArrayOutputStream
+            }
+        } catch (IOException ex) {
+            System.out.println(ex);
+        }
+        return result.toByteArray();
+    }
+
+    /** Run the example. */
+    public void readprogr(String[] args) {
+        // BytesStreamsAndFiles test = new BytesStreamsAndFiles();
+        // byte[] readAlternateImpl = test.read(INPUT_FILE_NAME);
+        // read in the bytes
+        byte[] fileContents = readAlternateImpl(INPUT_FILE_NAME);
+        write(fileContents, OUTPUT_FILE_NAME);
+    }// test.readAlternateImpl(INPUT_FILE_NAME);
     	
 	
 	
