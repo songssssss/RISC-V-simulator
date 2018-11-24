@@ -131,7 +131,17 @@ public class IsaSim {
 
         return result;
    	}
-
+	
+	public int convertirOctetEnEntier(byte[] b){    
+    	int MASK = 0xFF;
+    	int result = 0;   
+        result = b[0] & MASK;
+        result = result + ((b[1] & MASK) << 8);
+        result = result + ((b[2] & MASK) << 16);
+        result = result + ((b[3] & MASK) << 24);            
+    	return result;
+	}
+	
 	public static void main(String[] args) {
 
 		System.out.println("Hello RISC-V World!");
@@ -235,7 +245,8 @@ public class IsaSim {
 				break;
 			case 0x003: // type:load
 				// where is the memory?
-				// LB
+				
+					// LB
 				// LH
 				// LW
 				// LNU
