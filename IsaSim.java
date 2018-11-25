@@ -19,15 +19,17 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.*;
 
 public class IsaSim {
-    public static final String fileName = "branchmany";
+    public static final String fileName = "loop";
     public static final String INPUT_FILE_NAME = fileName + ".bin";
     public static final String OUTPUT_FILE_NAME = fileName + "_copy.res";
 
     static int pc;
     static int reg[] = new int[32];
     static byte data[] = new byte[800000];// memory = data[] + prog[]
+    static Stack stack = new Stack();
 
     // Here the first program hard coded as an array
     static int instructions[] = {};
@@ -161,6 +163,7 @@ public class IsaSim {
             B_imm = ((B_imm << 20) >> 20) / 2;
             int J_imm = (rs2 >>> 1) | (imm & 0x3f) << 4 | ((rs2 & 0x1) << 10) | (funct3 & 0x7) << 11 | (rs1 << 14)
                     | (imm >>> 6) << 19;// 7,5,5,3 => 20,10:1,11,19:12 =>7, 6:1,5:2,1,5,3
+            J_imm = J_imm / 2;
 
             System.out.println("instr: 0x" + decToHex(instr) + " ");
             System.out.println("opcode: 0x" + decToHex(opcode) + " ");
@@ -279,13 +282,17 @@ public class IsaSim {
                     break;
 
                 case 0b010: // LW
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
-                    b[2] = data[rs1 + I_imm + 2];
-                    b[3] = data[rs1 + I_imm + 3];
-                    reg[rd] = byteToInt(b);
-                    if ((b[3] >> 7) == 1) {
-                        reg[rd] = reg[rd] * -1;
+                    if (rs1 == 2) {
+                        reg[rd] = (Integer) stack.pop();
+                    } else {
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = data[rs1 + I_imm + 1];
+                        b[2] = data[rs1 + I_imm + 2];
+                        b[3] = data[rs1 + I_imm + 3];
+                        reg[rd] = byteToInt(b);
+                        if ((b[3] >> 7) == 1) {
+                            reg[rd] = reg[rd] * -1;
+                        }
                     }
                     break;
 
@@ -312,6 +319,7 @@ public class IsaSim {
                 byte[] temp = new byte[4];
                 switch (funct3) {
                 case 0b000: // SB
+
                     temp = intTo4Byte(reg[rs2]);
                     data[rs1 + S_imm] = temp[3];
                     break;
@@ -321,11 +329,15 @@ public class IsaSim {
                     data[rs1 + S_imm + 1] = temp[3];
                     break;
                 case 0b010: // SW
-                    temp = intTo4Byte(reg[rs2]);
-                    data[rs1 + S_imm] = temp[0];
-                    data[rs1 + S_imm + 1] = temp[1];
-                    data[rs1 + S_imm + 2] = temp[2];
-                    data[rs1 + S_imm + 3] = temp[3];
+                    if (rs1 == 2) {
+                        stack.push(reg[rs2]);
+                    } else {
+                        temp = intTo4Byte(reg[rs2]);
+                        data[rs1 + S_imm] = temp[0];
+                        data[rs1 + S_imm + 1] = temp[1];
+                        data[rs1 + S_imm + 2] = temp[2];
+                        data[rs1 + S_imm + 3] = temp[3];
+                    }
                 }
                 break;
 
