@@ -28,7 +28,7 @@ public class IsaSim {
 
     static int pc;
     static int reg[] = new int[32];
-    static byte data[] = new byte[800000];// memory = data[] + prog[]
+    static byte data[] = new byte[2147483632];// memory = data[] + prog[]
     static Stack stack = new Stack();
 
     // Here the first program hard coded as an array
@@ -282,9 +282,9 @@ public class IsaSim {
                     break;
 
                 case 0b010: // LW
-                    if (rs1 == 2) {
-                        reg[rd] = (Integer) stack.pop();
-                    } else {
+                    //if (rs1 == 2) {
+                      //  reg[rd] = (Integer) stack.pop();
+                   // } else {
                         b[0] = data[rs1 + I_imm];
                         b[1] = data[rs1 + I_imm + 1];
                         b[2] = data[rs1 + I_imm + 2];
@@ -293,7 +293,7 @@ public class IsaSim {
                         if ((b[3] >> 7) == 1) {
                             reg[rd] = reg[rd] * -1;
                         }
-                    }
+                    //}
                     break;
 
                 case 0b100: // LBU
@@ -329,16 +329,16 @@ public class IsaSim {
                     data[rs1 + S_imm + 1] = temp[3];
                     break;
                 case 0b010: // SW
-                    if (rs1 == 2) {
-                        stack.push(reg[rs2]);
-                    } else {
+                    //if (rs1 == 2) {
+                      //  stack.push(reg[rs2]);
+                    //} else {
                         temp = intTo4Byte(reg[rs2]);
                         data[rs1 + S_imm] = temp[0];
                         data[rs1 + S_imm + 1] = temp[1];
                         data[rs1 + S_imm + 2] = temp[2];
                         data[rs1 + S_imm + 3] = temp[3];
                     }
-                }
+                //}
                 break;
 
             case 0x13: // type: immediate
