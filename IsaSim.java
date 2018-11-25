@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class IsaSim {
-    public static final String fileName = "branchcnt";
+    public static final String fileName = "branchmany";
     public static final String INPUT_FILE_NAME = fileName + ".bin";
     public static final String OUTPUT_FILE_NAME = fileName + "_copy.res";
 
@@ -158,9 +158,9 @@ public class IsaSim {
             int U_imm = (funct3 | (rs1 << 5) | (rs2 << 8) | (imm << 13));
             int S_imm = rd + (imm << 5);
             int B_imm = (rd >> 1) & 0xf | ((imm & 0x3f) << 4) | ((rd & 0x1) << 10) | ((imm >> 6) << 11);
-            B_imm = ((B_imm << 20) >> 20);
-            // (rd >> 1)&0xf + (imm < 4)&0x3f; // not sure about B-type
-            // int J_imm = ;
+            B_imm = ((B_imm << 20) >> 20) / 2;
+            int J_imm = (rs2 >>> 1) | (imm & 0x3f) << 4 | ((rs2 & 0x1) << 10) | (funct3 & 0x7) << 11 | (rs1 << 14)
+                    | (imm >>> 6) << 19;// 7,5,5,3 => 20,10:1,11,19:12 =>7, 6:1,5:2,1,5,3
 
             System.out.println("instr: 0x" + decToHex(instr) + " ");
             System.out.println("opcode: 0x" + decToHex(opcode) + " ");
@@ -191,57 +191,65 @@ public class IsaSim {
                 break;
 
             case 0x6f: // JAL
+                System.out.println("J_imm: " + J_imm);
+                System.out.println("pc: " + pc);
                 reg[rd] = pc + 1;
-                pc = B_imm - 2;
+                pc = pc + J_imm - 1;
+                System.out.println("pc: " + pc);
                 break;
 
             case 0x67: // JALR
+                System.out.println("J_imm: " + J_imm);
+                System.out.println("reg[rs1]: " + reg[rs1]);
+                System.out.println("pc: " + pc);
                 reg[rd] = pc + 1;
-                pc = reg[rs1] + B_imm;
+                pc = reg[rs1] + J_imm - 1;
+                System.out.println("pc: " + pc);
                 break;
 
-            case 0x63: // type: bench
+            case 0x63: // type: branch
                 System.out.println("B_imm: " + B_imm);
+                System.out.println("pc: " + pc);
                 switch (funct3) {
                 case 0b000:// BEQ
                     if (reg[rs1] == reg[rs2]) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
                 case 0b001:// BNE
                     if (reg[rs1] != reg[rs2]) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
                 case 0b100: // BLT
                     if (reg[rs1] < reg[rs2]) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
                 case 0b101: // BGE
                     if (reg[rs1] >= reg[rs2]) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
 
                 case 0b110: // BLTU
                     if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
                 case 0b111:// BGEU
                     if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
                         reg[1] = pc + 1;
-                        pc = pc + B_imm;
+                        pc = pc + B_imm - 1;
                     }
                     break;
                 }
-
+                System.out.println("pc: " + pc);
                 break;
 
             case 0x3: // type:load
