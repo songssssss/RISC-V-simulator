@@ -22,8 +22,9 @@ import java.nio.file.Paths;
 
 public class IsaSim {
 
-    public static final String INPUT_FILE_NAME = "shift.bin";
-    public static final String OUTPUT_FILE_NAME = "shift_copy.res";
+    public static final String fileName = "shift";
+    public static final String INPUT_FILE_NAME = fileName + ".bin";
+    public static final String OUTPUT_FILE_NAME = fileName + "_copy.res";
 
     static int pc;
     static int reg[] = new int[32];
