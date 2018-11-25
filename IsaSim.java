@@ -199,7 +199,8 @@ public class IsaSim {
             int rs1 = (instr >> 15) & 0x01f;
             int rs2 = (instr >> 20) & 0x01f;
             int imm = (instr >>> 25);
-            int I_imm = rs2 + (imm << 5); // for I-type
+            int I_imm = (rs2 | (imm << 5)); // for I-type
+            I_imm = ((I_imm << 20) >> 20);
             int U_imm = (funct3 | (rs1 << 5) | (rs2 << 8) | (imm << 13));
             int S_imm = rd + (imm << 5);
             int B_imm = rd + (imm << 5);
