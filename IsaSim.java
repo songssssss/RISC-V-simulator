@@ -230,7 +230,7 @@ public class IsaSim {
 
             case 0x27: // AUIPC Add Upper Imm (20bits) to PC
                 reg[1] = pc; // do i need this?
-                pc = U_imm & 0xfffff000;
+                pc = (U_imm << 12);
                 reg[rd] = pc;
                 break;
 
