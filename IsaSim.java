@@ -150,6 +150,21 @@ public class IsaSim {
         }
         return intArr;
     }
+    
+    public static byte[] convert(int buf[]) {// this convert byte [] to int []
+        int intArr[] = new int[buf.length / 4];
+        int offset = 0;
+        for (int i = 0; i < intArr.length; i++) {
+            // intArr[i] = (buf[3 + offset] & 0xFF) | ((buf[2 + offset] & 0xFF) << 8) |
+            // ((buf[1 + offset] & 0xFF) << 16)
+            // | ((buf[0 + offset] & 0xFF) << 24);
+            // offset += 4;
+            intArr[i] = ((buf[3 + offset] & 0xFF) << 24) | ((buf[2 + offset] & 0xFF) << 16)
+                    | ((buf[1 + offset] & 0xFF) << 8) | ((buf[0 + offset] & 0xFF));
+            offset += 4;
+        }
+        return intArr;
+    }
 
     public static class SmallBinaryFiles {
 
@@ -293,18 +308,23 @@ public class IsaSim {
                 byte[] b = new byte[4];
                 switch (funct3) {
                 case 0b000: // LB
-                    b[0] = data[rs1 + I_imm];
+                    b [0] = data[rs1 + I_imm];
+                    b [1] = 0;
+                    b [2] = 0;
+                    b [3] = 0;
                     reg[rd] = byteToInt(b);
-                    if ((b[0] >> 3) == 1) {
+                    if ((b[0] >> 7 ) == 1) {
                         reg[rd] = reg[rd] * -1;
                     }
                     break;
 
                 case 0b001: // LH
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
+                    b [0] = data[rs1 + I_imm];
+                    b [1] = data[rs1 + I_imm + 1];
+                    b [2] = 0;
+                    b [3] = 0;
                     reg[rd] = byteToInt(b);
-                    if ((b[1] >> 3) == 1) {
+                    if ((b[1] >> 7) == 1) {
                         reg[rd] = reg[rd] * -1;
                     }
                     break;
@@ -315,6 +335,9 @@ public class IsaSim {
                     b[2] = data[rs1 + I_imm + 2];
                     b[3] = data[rs1 + I_imm + 3];
                     reg[rd] = byteToInt(b);
+                    if ((b[3] >> 7) == 1) {
+                        reg[rd] = reg[rd] * -1;
+                    }
                     break;
 
                 case 0b100: // LBU
@@ -455,7 +478,8 @@ public class IsaSim {
                 // content of your registers (the .res file).
                 // write it back out to a different file name
                 // SmallBinaryFiles writeBin = new SmallBinaryFiles();
-                // writeBin.writeSmallBinaryFile(writeBin, OUTPUT_FILE_NAME);
+                // writeBin = intToByteArray (reg) 
+                //writeBin.writeSmallBinaryFile(writeBin, OUTPUT_FILE_NAME);
                 System.out.println("ecall 10");
 
                 break;
