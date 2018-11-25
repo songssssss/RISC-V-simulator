@@ -21,8 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class IsaSim {
-
-    public static final String fileName = "shift";
+    public static final String fileName = "branchcnt";
     public static final String INPUT_FILE_NAME = fileName + ".bin";
     public static final String OUTPUT_FILE_NAME = fileName + "_copy.res";
 
@@ -158,7 +157,8 @@ public class IsaSim {
             I_imm = ((I_imm << 20) >> 20);
             int U_imm = (funct3 | (rs1 << 5) | (rs2 << 8) | (imm << 13));
             int S_imm = rd + (imm << 5);
-            int B_imm = rd + (imm << 5);
+            int B_imm = (rd >> 1) & 0xf | ((imm & 0x3f) << 4) | ((rd & 0x1) << 10) | ((imm >> 6) << 11);
+            B_imm = ((B_imm << 20) >> 20);
             // (rd >> 1)&0xf + (imm < 4)&0x3f; // not sure about B-type
             // int J_imm = ;
 
@@ -191,12 +191,12 @@ public class IsaSim {
                 break;
 
             case 0x6f: // JAL
-                reg[rd] = pc + 4;
-                pc = B_imm - 4;
+                reg[rd] = pc + 1;
+                pc = B_imm - 2;
                 break;
 
             case 0x67: // JALR
-                reg[rd] = pc + 4;
+                reg[rd] = pc + 1;
                 pc = reg[rs1] + B_imm;
                 break;
 
@@ -205,98 +205,99 @@ public class IsaSim {
                 switch (funct3) {
                 case 0b000:// BEQ
                     if (reg[rs1] == reg[rs2]) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
                 case 0b001:// BNE
                     if (reg[rs1] != reg[rs2]) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
                 case 0b100: // BLT
                     if (reg[rs1] < reg[rs2]) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
                 case 0b101: // BGE
                     if (reg[rs1] >= reg[rs2]) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
+
                 case 0b110: // BLTU
                     if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
                 case 0b111:// BGEU
                     if (getUnsignedInt(reg[rs1]) < getUnsignedInt(reg[rs2])) {
-                        reg[1] = pc + 4;
-                        pc = B_imm;
+                        reg[1] = pc + 1;
+                        pc = pc + B_imm;
                     }
                     break;
                 }
 
                 break;
 
-                case 0x3: // type:load
-                    System.out.println("I_imm: " + I_imm);
-                    byte[] b = new byte[4];
-                    switch (funct3) {
-                    case 0b000: // LB
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = 0;
-                        b[2] = 0;
-                        b[3] = 0;
-                        reg[rd] = byteToInt(b);
-                        if ((b[0] >> 7) == 1) {
-                            reg[rd] = reg[rd] * -1;
-                        }
-                        break;
-
-                    case 0b001: // LH
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = data[rs1 + I_imm + 1];
-                        b[2] = 0;
-                        b[3] = 0;
-                        reg[rd] = byteToInt(b);
-                        if ((b[1] >> 7) == 1) {
-                            reg[rd] = reg[rd] * -1;
-                        }
-                        break;
-
-                    case 0b010: // LW
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = data[rs1 + I_imm + 1];
-                        b[2] = data[rs1 + I_imm + 2];
-                        b[3] = data[rs1 + I_imm + 3];
-                        reg[rd] = byteToInt(b);
-                        if ((b[3] >> 7) == 1) {
-                            reg[rd] = reg[rd] * -1;
-                        }
-                        break;
-
-                    case 0b100: // LBU
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = 0;
-                        b[2] = 0;
-                        b[3] = 0;
-                        reg[rd] = byteToInt(b);
-                        break;
-
-                    case 0b101: // LHU
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = data[rs1 + I_imm + 1];
-                        b[2] = 0;
-                        b[3] = 0;
-                        reg[rd] = byteToInt(b);
-                        break;
+            case 0x3: // type:load
+                System.out.println("I_imm: " + I_imm);
+                byte[] b = new byte[4];
+                switch (funct3) {
+                case 0b000: // LB
+                    b[0] = data[rs1 + I_imm];
+                    b[1] = 0;
+                    b[2] = 0;
+                    b[3] = 0;
+                    reg[rd] = byteToInt(b);
+                    if ((b[0] >> 7) == 1) {
+                        reg[rd] = reg[rd] * -1;
                     }
                     break;
+
+                case 0b001: // LH
+                    b[0] = data[rs1 + I_imm];
+                    b[1] = data[rs1 + I_imm + 1];
+                    b[2] = 0;
+                    b[3] = 0;
+                    reg[rd] = byteToInt(b);
+                    if ((b[1] >> 7) == 1) {
+                        reg[rd] = reg[rd] * -1;
+                    }
+                    break;
+
+                case 0b010: // LW
+                    b[0] = data[rs1 + I_imm];
+                    b[1] = data[rs1 + I_imm + 1];
+                    b[2] = data[rs1 + I_imm + 2];
+                    b[3] = data[rs1 + I_imm + 3];
+                    reg[rd] = byteToInt(b);
+                    if ((b[3] >> 7) == 1) {
+                        reg[rd] = reg[rd] * -1;
+                    }
+                    break;
+
+                case 0b100: // LBU
+                    b[0] = data[rs1 + I_imm];
+                    b[1] = 0;
+                    b[2] = 0;
+                    b[3] = 0;
+                    reg[rd] = byteToInt(b);
+                    break;
+
+                case 0b101: // LHU
+                    b[0] = data[rs1 + I_imm];
+                    b[1] = data[rs1 + I_imm + 1];
+                    b[2] = 0;
+                    b[3] = 0;
+                    reg[rd] = byteToInt(b);
+                    break;
+                }
+                break;
 
             case 0x23: // type: store
                 System.out.println("S_imm: " + S_imm);
