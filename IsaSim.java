@@ -3,7 +3,7 @@
  * RISC-V Instruction Set Simulator
  * 
  * @author Lau Kai Sing (laut9810@gmail.com)
- * Song Zi Wei s181620
+ * @author Song Zi Wei s181620
  */
 
 import java.io.BufferedInputStream;
@@ -22,77 +22,21 @@ import java.nio.file.Paths;
 
 public class IsaSim {
 
+    public static final String INPUT_FILE_NAME = "shift.bin";
+    public static final String OUTPUT_FILE_NAME = "shift_copy.res";
+
     static int pc;
     static int reg[] = new int[32];
     static byte data[] = new byte[800000];// memory = data[] + prog[]
 
-    // The final simulator has to read a binary file containing RISC-V instructions.
-
     // Here the first program hard coded as an array
-    static int instructions[] = {
-            // As minimal RISC-V assembler example
-            0x00200093, // addi x1 x0 2
-            0x00300113, // addi x2 x0 3
-            0x002081b3, // add x3 x1 x2
-            0x40208233, // sub x4 x1 x2
-    };
-
-    public static final String INPUT_FILE_NAME = "addlarge.bin";
-    public static final String OUTPUT_FILE_NAME = "addlarge_copy.res";
-
-    /** Read the given binary file, and return its contents as a byte array. */
-    byte[] read(String inputFileName) {
-        log("Reading in binary file named : " + inputFileName);
-        File file = new File(inputFileName);
-        log("File size: " + file.length());
-        byte[] result = new byte[(int) file.length()];
-        try {
-            InputStream input = null;
-            try {
-                int totalBytesRead = 0;
-                input = new BufferedInputStream(new FileInputStream(file));
-                while (totalBytesRead < result.length) {
-                    int bytesRemaining = result.length - totalBytesRead;
-                    // input.read() returns -1, 0, or more :
-                    int bytesRead = input.read(result, totalBytesRead, bytesRemaining);
-                    if (bytesRead > 0) {
-                        totalBytesRead = totalBytesRead + bytesRead;
-                    }
-                }
-                /*
-                 * the above style is a bit tricky: it places bytes into the 'result' array;
-                 * 'result' is an output parameter; the while loop usually has a single
-                 * iteration only.
-                 */
-                log("Num bytes read: " + totalBytesRead);
-            } finally {
-                log("Closing input stream.");
-                input.close();
-            }
-        } catch (FileNotFoundException ex) {
-            log("File not found.");
-        } catch (IOException ex) {
-            log(ex);
-        }
-        return result;
-    }
-
-    public void write(byte[] input, String outputFileName) {
-        System.out.println("Writing binary file...");
-        try {
-            OutputStream output = null;
-            try {
-                output = new BufferedOutputStream(new FileOutputStream(outputFileName));
-                output.write(input);
-            } finally {
-                output.close();
-            }
-        } catch (FileNotFoundException ex) {
-            System.out.println("File not found.");
-        } catch (IOException ex) {
-            System.out.println(ex);
-        }
-    }
+    static int instructions[] = {};
+    // // As minimal RISC-V assembler example
+    // 0x00200093, // addi x1 x0 2
+    // 0x00300113, // addi x2 x0 3
+    // 0x002081b3, // add x3 x1 x2
+    // 0x40208233, // sub x4 x1 x2
+    // };
 
     public static void log(Object thing) {
         System.out.println(String.valueOf(thing));
@@ -109,10 +53,11 @@ public class IsaSim {
         return (x & 0xffffffff);
     }
 
-    public static byte[] intToByteArray(int a) {
-        return new byte[] { (byte) ((a >> 24) & 0xFF), (byte) ((a >> 16) & 0xFF), (byte) ((a >> 8) & 0xFF),
-                (byte) (a & 0xFF) };
-    }
+    // public static byte[] intToByteArray(int a) {
+    // return new byte[] { (byte) ((a >> 24) & 0xFF), (byte) ((a >> 16) & 0xFF),
+    // (byte) ((a >> 8) & 0xFF),
+    // (byte) (a & 0xFF) };
+    // }
 
     public static byte[] intTo4Byte(int i) {
         // this disect int into byte[4]
@@ -151,10 +96,27 @@ public class IsaSim {
         return intArr;
     }
 
+    public static byte[] regArrayToByteArray(int reg[]) {
+        // this convert the register array to byte array for output
+        int offset = 0;
+        byte byteArr[] = new byte[reg.length * 4];
+        byte temp[] = new byte[4];
+        for (int i = 0; i < reg.length; i++) {
+            temp = intTo4Byte(reg[i]);
+            byteArr[offset + 0] = temp[3];
+            byteArr[offset + 1] = temp[2];
+            byteArr[offset + 2] = temp[1];
+            byteArr[offset + 3] = temp[0];
+            offset += 4;
+        }
+        return byteArr;
+
+    }
+
     public static class SmallBinaryFiles {
 
-        final static String FILE_NAME = "addlarge.bin";
-        final static String OUTPUT_FILE_NAME = "addlarge_copy.res";
+        final static String FILE_NAME = " ";
+        final static String OUTPUT_FILE_NAME = " ";
 
         byte[] readSmallBinaryFile(String fileName) throws IOException {
             Path path = Paths.get(fileName);
@@ -184,14 +146,6 @@ public class IsaSim {
         instructions = convert(bytes);
 
         for (;;) {
-            // BytesStreamsAndFiles test = new BytesStreamsAndFiles();
-            // read in the bytes
-            // byte[] fileContents = test.read(INPUT_FILE_NAME);
-            // test.readAlternateImpl(INPUT_FILE_NAME);
-            // instructions = intTo4Byte(fileContents);
-            // write it back out to a different file name
-            // test.write(fileContents, OUTPUT_FILE_NAME);
-
             int instr = instructions[pc];
             int opcode = instr & 0x7f;
             int rd = (instr >> 7) & 0x01f;
@@ -454,9 +408,12 @@ public class IsaSim {
                 // When the program ends with ecall you write another binary file containing the
                 // content of your registers (the .res file).
                 // write it back out to a different file name
-                // SmallBinaryFiles writeBin = new SmallBinaryFiles();
-                // writeBin.writeSmallBinaryFile(writeBin, OUTPUT_FILE_NAME);
                 System.out.println("ecall 10");
+                SmallBinaryFiles writeBin = new SmallBinaryFiles();
+
+                byte[] writeBinFile = regArrayToByteArray(reg);
+                log("write file: " + OUTPUT_FILE_NAME);
+                writeBin.writeSmallBinaryFile(writeBinFile, OUTPUT_FILE_NAME);
 
                 break;
 
