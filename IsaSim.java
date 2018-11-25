@@ -224,7 +224,7 @@ public class IsaSim {
                 break;
 
             case 0x37: // LUI load upper immediate (20bits)
-                System.out.println("U_imm: " + U_imm & 0xfffff000);
+                System.out.println("U_imm: " + (U_imm & 0xfffff000));
                 reg[rd] = U_imm & 0xfffff000;
                 break;
 
