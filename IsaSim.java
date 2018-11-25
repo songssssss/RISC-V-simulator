@@ -2,7 +2,7 @@
  * RISC-V Instruction Set Simulator
  * 
  * @author Lau Kai Sing (laut9810@gmail.com)
- * 
+ * Song Zi Wei s181620
  */
 
 import java.io.BufferedInputStream;
@@ -37,22 +37,49 @@ public class IsaSim {
 			0x40208233, // sub x4 x1 x2
 	};
 
-	private static final String INPUT_FILE_NAME = "C:\\TEMP\\cottage.jpg";
-    private static final String OUTPUT_FILE_NAME = "C:\\TEMP\\cottage_copy.jpg";
+    private static final String INPUT_FILE_NAME = "D:\\addlarge.bin";
+    private static final String OUTPUT_FILE_NAME = "D:\\addlarge_copy.res";
 
-    public byte[] readAlternateImpl(String inputFileName) {
-        System.out.println("Reading in binary file named : " + inputFileName);
-        File file = new File(inputFileName);
-        System.out.println("File size: " + file.length());
-        byte[] result = null;
-        try {
-            InputStream input = new BufferedInputStream(new FileInputStream(file));
-            result = readAndClose(input);
-        } catch (FileNotFoundException ex) {
-            System.out.println(ex);
-        }
-        return result;
-    }
+    /** Read the given binary file, and return its contents as a byte array.*/ 
+	  byte[] read(String inputFileName){
+	    log("Reading in binary file named : " + inputFileName);
+	    File file = new File(inputFileName);
+	    log("File size: " + file.length());
+	    byte[] result = new byte[(int)file.length()];
+	    try {
+	      InputStream input = null;
+	      try {
+		int totalBytesRead = 0;
+		input = new BufferedInputStream(new FileInputStream(file));
+		while(totalBytesRead < result.length){
+		  int bytesRemaining = result.length - totalBytesRead;
+		  //input.read() returns -1, 0, or more :
+		  int bytesRead = input.read(result, totalBytesRead, bytesRemaining); 
+		  if (bytesRead > 0){
+		    totalBytesRead = totalBytesRead + bytesRead;
+		  }
+		}
+		/*
+		 the above style is a bit tricky: it places bytes into the 'result' array; 
+		 'result' is an output parameter;
+		 the while loop usually has a single iteration only.
+		*/
+		log("Num bytes read: " + totalBytesRead);
+	      }
+	      finally {
+		log("Closing input stream.");
+		input.close();
+	      }
+	    }
+	    catch (FileNotFoundException ex) {
+	      log("File not found.");
+	    }
+	    catch (IOException ex) {
+	      log(ex);
+	    }
+	    return result;
+	  }
+  
 
     public void write(byte[] input, String outputFileName) {
         System.out.println("Writing binary file...");
@@ -71,44 +98,10 @@ public class IsaSim {
         }
     }
 
-    byte[] readAndClose(InputStream input) {
-        // carries the data from input to output :
-        byte[] bucket = new byte[32 * 1024];
-        ByteArrayOutputStream result = null;
-        try {
-            try {
-                // Use buffering? No. Buffering avoids costly access to disk or network;
-                // buffering to an in-memory stream makes no sense.
-                result = new ByteArrayOutputStream(bucket.length);
-                int bytesRead = 0;
-                while (bytesRead != -1) {
-                    // aInput.read() returns -1, 0, or more :
-                    bytesRead = input.read(bucket);
-                    if (bytesRead > 0) {
-                        result.write(bucket, 0, bytesRead);
-                    }
-                }
-            } finally {
-                input.close();
-                // result.close(); this is a no-operation for ByteArrayOutputStream
-            }
-        } catch (IOException ex) {
-            System.out.println(ex);
-        }
-        return result.toByteArray();
+    private static void log(Object thing){
+        System.out.println(String.valueOf(thing));
     }
-
-    /** Run the example. */
-    public void readprogr(String[] args) {
-        // BytesStreamsAndFiles test = new BytesStreamsAndFiles();
-        // byte[] readAlternateImpl = test.read(INPUT_FILE_NAME);
-        // read in the bytes
-        byte[] fileContents = readAlternateImpl(INPUT_FILE_NAME);
-        write(fileContents, OUTPUT_FILE_NAME);
-    }// test.readAlternateImpl(INPUT_FILE_NAME);
-    	
 	
-
 
 	public static String decToHex(int dec) {
 		return Integer.toHexString(dec); // this turn decimal to hex, only 
@@ -119,6 +112,16 @@ public class IsaSim {
 		System.out.println("int: " + x);
 		System.out.println("unsigned int: " + (x & 0xffffffff));
 		return (x & 0xffffffff);
+	}
+	
+
+	public static byte[] intToByteArray(int a){
+	    return new byte[] {
+		(byte) ((a >> 24) & 0xFF),
+		(byte) ((a >> 16) & 0xFF),   
+		(byte) ((a >> 8) & 0xFF),   
+		(byte) (a & 0xFF)
+	    };
 	}
 	
 	public static byte[] toBytes(int i) {
@@ -132,7 +135,7 @@ public class IsaSim {
         return result;
    	}
 	
-	public int convertirOctetEnEntier(byte[] b){    
+	public static int toInt (byte[] b){    
     	int MASK = 0xFF;
     	int result = 0;   
         result = b[0] & MASK;
@@ -150,6 +153,13 @@ public class IsaSim {
 		// reg[0] = 0; // Don't know if necessary
 
 		for (;;) {
+			BytesStreamsAndFiles test = new BytesStreamsAndFiles();
+			//read in the bytes
+			byte[] fileContents = test.read(INPUT_FILE_NAME);
+			//test.readAlternateImpl(INPUT_FILE_NAME);
+			instructions = intToByteArray (fileContents)
+			//write it back out to a different file name
+			//test.write(fileContents, OUTPUT_FILE_NAME);
 
 			int instr = instructions[pc];
 			int opcode = instr & 0x7f;
@@ -243,15 +253,38 @@ public class IsaSim {
 				}
 
 				break;
+					
 			case 0x003: // type:load
-				// where is the memory?
-				
-					// LB
-				// LH
-				// LW
-				// LNU
-				// LHU
+				switch (funct3) {
+				case 0x000:        // LB
+					b [0] = data [rs1+I_imm] ;
+				break; 
+						
+				case 0x001:        // LH
+					b [0] = data [rs1+I_imm] ;
+					b [1] = data [rs1+I_imm+1] ;
+					reg[rd] = toInt (b);
+				break; 
+						
+				case 0x010:        // LW
+					b [0] = data [rs1+I_imm] ;
+					b [1] = data [rs1+I_imm+1] ;
+					b [2] = data [rs1+I_imm+2] ;
+					b [3] = data [rs1+I_imm+3] ;
+					reg[rd] = toInt (b);
+				break; 
+						
+				case 0x100:        // LBU
+					b [0] = data [rs1+I_imm] ;
+				break; 
+						
+				case 0x101:        // LHU
+					b [0] = data [rs1+I_imm] ;
+					b [1] = data [rs1+I_imm+1] ;
+					reg[rd] = toInt (b);
 				break;
+			     }
+			     break;
 
 			case 0x023: // type: store
 				byte[] temp = new byte[4];
@@ -371,6 +404,9 @@ public class IsaSim {
 				pc = instructions.length;
 				// When the program ends with ecall you write another binary file containing the
 				// content of your registers (the .res file).
+				//write it back out to a different file name
+			        int registers = intToByteArray(reg)
+				test.write(registers, OUTPUT_FILE_NAME);
 				break;
 
 			default:
