@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class IsaSim {
-		
+
     static int pc;
     static int reg[] = new int[32];
     static byte data[] = new byte[800000];// memory = data[] + prog[]
@@ -198,9 +198,9 @@ public class IsaSim {
             int funct3 = (instr >> 12) & 0x7;
             int rs1 = (instr >> 15) & 0x01f;
             int rs2 = (instr >> 20) & 0x01f;
-            int imm = (instr >> 25);
+            int imm = (instr >>> 25);
             int I_imm = rs2 + (imm << 5); // for I-type
-            int U_imm = funct3 + (rs1 << 5) + (rs2 << 8) + (imm << 13);
+            int U_imm = (funct3 | (rs1 << 5) | (rs2 << 8) | (imm << 13));
             int S_imm = rd + (imm << 5);
             int B_imm = rd + (imm << 5);
             // (rd >> 1)&0xf + (imm < 4)&0x3f; // not sure about B-type
@@ -224,11 +224,11 @@ public class IsaSim {
                 break;
 
             case 0x37: // LUI load upper immediate (20bits)
-                System.out.println("U_imm: " + (U_imm & 0xfffff000));
-                reg[rd] = U_imm & 0xfffff000;
+                System.out.println("U_imm: " + (U_imm << 12));
+                reg[rd] = (U_imm << 12);
                 break;
 
-            case 0x027: // AUIPC Add Upper Imm (20bits) to PC
+            case 0x27: // AUIPC Add Upper Imm (20bits) to PC
                 reg[1] = pc; // do i need this?
                 pc = U_imm & 0xfffff000;
                 reg[rd] = pc;
@@ -356,7 +356,7 @@ public class IsaSim {
                 }
                 break;
 
-            case 0x013: // type: immediate
+            case 0x13: // type: immediate
                 System.out.println("I_imm: " + I_imm);
                 switch (funct3) {
                 case 0b000: // ADDI
@@ -402,7 +402,7 @@ public class IsaSim {
                 }
                 break;
 
-            case 0x033:
+            case 0x33:
                 switch (funct3) {
                 case 0b000: // ADD & SUB
                     reg[rd] = reg[rs1] - reg[rs2] + 2 * (1 - (imm >> 5)) * reg[rs2];
@@ -448,7 +448,7 @@ public class IsaSim {
                 }
                 break;
 
-            case 0x073: // ecall
+            case 0x73: // ecall
                 pc = instructions.length;
                 // When the program ends with ecall you write another binary file containing the
                 // content of your registers (the .res file).
