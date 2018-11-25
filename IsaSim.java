@@ -243,52 +243,60 @@ public class IsaSim {
 
                 break;
 
-            case 0x3: // type:load
-                System.out.println("I_imm: " + I_imm);
-                byte[] b = new byte[4];
-                switch (funct3) {
-                case 0b000: // LB
-                    b[0] = data[rs1 + I_imm];
-                    reg[rd] = byteToInt(b);
-                    if ((b[0] >> 3) == 1) {
-                        reg[rd] = reg[rd] * -1;
+                case 0x3: // type:load
+                    System.out.println("I_imm: " + I_imm);
+                    byte[] b = new byte[4];
+                    switch (funct3) {
+                    case 0b000: // LB
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = 0;
+                        b[2] = 0;
+                        b[3] = 0;
+                        reg[rd] = byteToInt(b);
+                        if ((b[0] >> 7) == 1) {
+                            reg[rd] = reg[rd] * -1;
+                        }
+                        break;
+
+                    case 0b001: // LH
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = data[rs1 + I_imm + 1];
+                        b[2] = 0;
+                        b[3] = 0;
+                        reg[rd] = byteToInt(b);
+                        if ((b[1] >> 7) == 1) {
+                            reg[rd] = reg[rd] * -1;
+                        }
+                        break;
+
+                    case 0b010: // LW
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = data[rs1 + I_imm + 1];
+                        b[2] = data[rs1 + I_imm + 2];
+                        b[3] = data[rs1 + I_imm + 3];
+                        reg[rd] = byteToInt(b);
+                        if ((b[3] >> 7) == 1) {
+                            reg[rd] = reg[rd] * -1;
+                        }
+                        break;
+
+                    case 0b100: // LBU
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = 0;
+                        b[2] = 0;
+                        b[3] = 0;
+                        reg[rd] = byteToInt(b);
+                        break;
+
+                    case 0b101: // LHU
+                        b[0] = data[rs1 + I_imm];
+                        b[1] = data[rs1 + I_imm + 1];
+                        b[2] = 0;
+                        b[3] = 0;
+                        reg[rd] = byteToInt(b);
+                        break;
                     }
                     break;
-
-                case 0b001: // LH
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
-                    reg[rd] = byteToInt(b);
-                    if ((b[1] >> 3) == 1) {
-                        reg[rd] = reg[rd] * -1;
-                    }
-                    break;
-
-                case 0b010: // LW
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
-                    b[2] = data[rs1 + I_imm + 2];
-                    b[3] = data[rs1 + I_imm + 3];
-                    reg[rd] = byteToInt(b);
-                    break;
-
-                case 0b100: // LBU
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = 0;
-                    b[2] = 0;
-                    b[3] = 0;
-                    reg[rd] = byteToInt(b);
-                    break;
-
-                case 0b101: // LHU
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
-                    b[2] = 0;
-                    b[3] = 0;
-                    reg[rd] = byteToInt(b);
-                    break;
-                }
-                break;
 
             case 0x23: // type: store
                 System.out.println("S_imm: " + S_imm);
