@@ -28,7 +28,7 @@ public class IsaSim {
 
     static int pc;
     static int reg[] = new int[32];
-    static byte data[] = new byte[2147483632];// memory = data[] + prog[]
+    static byte data[] = new byte[3000000];// memory = data[] + prog[]
     static Stack stack = new Stack();
 
     // Here the first program hard coded as an array
@@ -76,10 +76,10 @@ public class IsaSim {
         // this merge byte[4] to int
         int MASK = 0xFF;
         int result = 0;
-        result = b[0] & MASK;
-        result = result + ((b[1] & MASK) << 8);
-        result = result + ((b[2] & MASK) << 16);
-        result = result + ((b[3] & MASK) << 24);
+        result = b[3] & MASK;
+        result = result + ((b[2] & MASK) << 8);
+        result = result + ((b[1] & MASK) << 16);
+        result = result + ((b[0] & MASK) << 24);
         return result;
     }
 
@@ -140,7 +140,7 @@ public class IsaSim {
         System.out.println("Hello RISC-V World!");
 
         pc = 0;
-        // reg[0] = 0; // Don't know if necessary
+        // reg[0] = 0; 
         SmallBinaryFiles binary = new SmallBinaryFiles();
         byte[] bytes = binary.readSmallBinaryFile(INPUT_FILE_NAME);
         log("Name of file: " + INPUT_FILE_NAME);
@@ -158,7 +158,8 @@ public class IsaSim {
             int I_imm = (rs2 | (imm << 5)); // for I-type
             I_imm = ((I_imm << 20) >> 20);
             int U_imm = (funct3 | (rs1 << 5) | (rs2 << 8) | (imm << 13));
-            int S_imm = rd + (imm << 5);
+            int S_imm = rd | ((imm & 0x7f) << 5);
+            S_imm = ((S_imm << 20) >> 20);
             int B_imm = (rd >> 1) & 0xf | ((imm & 0x3f) << 4) | ((rd & 0x1) << 10) | ((imm >> 6) << 11);
             B_imm = ((B_imm << 20) >> 20) / 2;
             int J_imm = (rs2 >>> 1) | (imm & 0x3f) << 4 | ((rs2 & 0x1) << 10) | (funct3 & 0x7) << 11 | (rs1 << 14)
@@ -260,7 +261,7 @@ public class IsaSim {
                 byte[] b = new byte[4];
                 switch (funct3) {
                 case 0b000: // LB
-                    b[0] = data[rs1 + I_imm];
+                    b[0] = data[reg[rs1] + I_imm];
                     b[1] = 0;
                     b[2] = 0;
                     b[3] = 0;
@@ -271,8 +272,8 @@ public class IsaSim {
                     break;
 
                 case 0b001: // LH
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
+                    b[0] = data[reg[rs1] + I_imm];
+                    b[1] = data[reg[rs1] + I_imm + 1];
                     b[2] = 0;
                     b[3] = 0;
                     reg[rd] = byteToInt(b);
@@ -285,19 +286,19 @@ public class IsaSim {
                     //if (rs1 == 2) {
                       //  reg[rd] = (Integer) stack.pop();
                    // } else {
-                        b[0] = data[rs1 + I_imm];
-                        b[1] = data[rs1 + I_imm + 1];
-                        b[2] = data[rs1 + I_imm + 2];
-                        b[3] = data[rs1 + I_imm + 3];
+                        b[0] = data[reg[rs1] + I_imm];
+                        b[1] = data[reg[rs1] + I_imm + 1];
+                        b[2] = data[reg[rs1] + I_imm + 2];
+                        b[3] = data[reg[rs1] + I_imm + 3];
                         reg[rd] = byteToInt(b);
-                        if ((b[3] >> 7) == 1) {
-                            reg[rd] = reg[rd] * -1;
-                        }
+                        //if ((b[3] >> 7) == 1) {
+                           // reg[rd] = reg[rd] * -1;
+                       // }
                     //}
                     break;
 
                 case 0b100: // LBU
-                    b[0] = data[rs1 + I_imm];
+                    b[0] = data[reg[rs1] + I_imm];
                     b[1] = 0;
                     b[2] = 0;
                     b[3] = 0;
@@ -305,8 +306,8 @@ public class IsaSim {
                     break;
 
                 case 0b101: // LHU
-                    b[0] = data[rs1 + I_imm];
-                    b[1] = data[rs1 + I_imm + 1];
+                    b[0] = data[reg[rs1] + I_imm];
+                    b[1] = data[reg[rs1] + I_imm + 1];
                     b[2] = 0;
                     b[3] = 0;
                     reg[rd] = byteToInt(b);
@@ -321,22 +322,22 @@ public class IsaSim {
                 case 0b000: // SB
 
                     temp = intTo4Byte(reg[rs2]);
-                    data[rs1 + S_imm] = temp[3];
+                    data[reg[rs1] + S_imm] = temp[3];
                     break;
                 case 0b001: // SH
                     temp = intTo4Byte(reg[rs2]);
-                    data[rs1 + S_imm] = temp[2];
-                    data[rs1 + S_imm + 1] = temp[3];
+                    data[reg[rs1] + S_imm] = temp[2];
+                    data[reg[rs1] + S_imm + 1] = temp[3];
                     break;
                 case 0b010: // SW
                     //if (rs1 == 2) {
                       //  stack.push(reg[rs2]);
                     //} else {
                         temp = intTo4Byte(reg[rs2]);
-                        data[rs1 + S_imm] = temp[0];
-                        data[rs1 + S_imm + 1] = temp[1];
-                        data[rs1 + S_imm + 2] = temp[2];
-                        data[rs1 + S_imm + 3] = temp[3];
+                        data[reg[rs1] + S_imm] = temp[0];
+                        data[reg[rs1] + S_imm + 1] = temp[1];
+                        data[reg[rs1] + S_imm + 2] = temp[2];
+                        data[reg[rs1] + S_imm + 3] = temp[3];
                     }
                 //}
                 break;
